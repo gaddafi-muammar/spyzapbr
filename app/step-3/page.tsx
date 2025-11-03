@@ -42,28 +42,28 @@ export default function Step3() {
     )
 
     const fetchLocation = async () => {
-  try {
-    // Cria um AbortController com um timeout de 5 segundos
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 5000)
+      try {
+        // Cria um AbortController com um timeout de 5 segundos
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 5000)
 
-    // Chama a sua API interna em /api/location
-    const response = await fetch("/api/location", {
-      signal: controller.signal,
-    })
-    clearTimeout(timeoutId)
+        // Chama a sua API interna em /api/location
+        const response = await fetch("/api/location", {
+          signal: controller.signal,
+        })
+        clearTimeout(timeoutId)
 
-    if (!response.ok) throw new Error("Failed to fetch location from internal API")
-    const data = await response.json()
-    
-    // Define a localização com base na resposta da sua API
-    setLocation(data.city || "Unknown Location") 
-  } catch (error) {
-    // Falha silenciosa com um fallback
-    console.error("[v0] Location fetch error:", error)
-    setLocation("Your Location") // Fallback em caso de erro
-  }
-}
+        if (!response.ok) throw new Error("Failed to fetch location from internal API")
+        const data = await response.json()
+
+        // Define a localização com base na resposta da sua API
+        setLocation(data.city || "Unknown Location")
+      } catch (error) {
+        // Falha silenciosa com um fallback
+        console.error("[v0] Location fetch error:", error)
+        setLocation("Your Location") // Fallback em caso de erro
+      }
+    }
 
     // Call fetchLocation without awaiting to prevent blocking
     fetchLocation()
@@ -72,20 +72,20 @@ export default function Step3() {
   // Memoiza a lista de passos para que ela seja recriada apenas quando a 'location' mudar
   const steps: ProgressStep[] = useMemo(
     () => [
-      { id: "initiating", text: "Initiating connection with WhatsApp servers...", status: "pending" },
-      { id: "locating", text: "Locating the nearest server...", status: "pending" },
-      { id: "establishing", text: "Server located! Establishing secure connection...", status: "pending" },
-      { id: "verifying", text: "Verifying phone number...", status: "pending" },
-      { id: "valid", text: "Valid phone number", status: "pending" },
-      { id: "analyzing", text: "Analyzing database...", status: "pending" },
-      { id: "fetching", text: "Fetching profile information...", status: "pending" },
-      { id: "detecting", text: "Detecting device location...", status: "pending" },
-      { id: "suspicious", text: `Suspicious activity detected near ${location}...`, status: "pending" },
-      { id: "preparing", text: "Preparing private reading channel...", status: "pending" },
-      { id: "established", text: "Private channel established!", status: "pending" },
-      { id: "synchronizing", text: "Synchronizing messages...", status: "pending" },
-      { id: "complete", text: "Synchronization complete!", status: "pending" },
-      { id: "granted", text: "Access successfully granted!", status: "pending" },
+      { id: "initiating", text: "Iniciando conexão com os servidores do WhatsApp...", status: "pending" },
+      { id: "locating", text: "Localizando o servidor mais próximo...", status: "pending" },
+      { id: "establishing", text: "Servidor localizado! Estabelecendo conexão segura...", status: "pending" },
+      { id: "verifying", text: "Verificando número de telefone...", status: "pending" },
+      { id: "valid", text: "Número de telefone válido", status: "pending" },
+      { id: "analyzing", text: "Analisando banco de dados...", status: "pending" },
+      { id: "fetching", text: "Recuperando informações de perfil...", status: "pending" },
+      { id: "detecting", text: "Detectando localização do dispositivo...", status: "pending" },
+      { id: "suspicious", text: `Atividade suspeita detectada perto de ${location}...`, status: "pending" },
+      { id: "preparing", text: "Preparando canal de leitura privada...", status: "pending" },
+      { id: "established", text: "Canal privado estabelecido!", status: "pending" },
+      { id: "synchronizing", text: "Sincronizando mensagens...", status: "pending" },
+      { id: "complete", text: "Sincronização completa!", status: "pending" },
+      { id: "granted", text: "Acesso concedido com sucesso!", status: "pending" },
     ],
     [location],
   )
@@ -179,7 +179,7 @@ export default function Step3() {
                 {profilePhoto ? (
                   <Image
                     src={profilePhoto || "/placeholder.svg"}
-                    alt="WhatsApp Profile"
+                    alt="Perfil WhatsApp"
                     width={64}
                     height={64}
                     className="object-cover h-full w-full"
@@ -190,8 +190,8 @@ export default function Step3() {
                 )}
               </div>
               <div>
-                <h3 className="font-semibold text-gray-800 text-lg mb-1">WhatsApp Profile</h3>
-                <p className="text-gray-600 mb-2">{phoneNumber || "Loading number..."}</p>
+                <h3 className="font-semibold text-gray-800 text-lg mb-1">Perfil WhatsApp</h3>
+                <p className="text-gray-600 mb-2">{phoneNumber || "Carregando número..."}</p>
                 <div className="flex items-center justify-center gap-1.5 text-green-600 text-sm">
                   <MapPin className="h-4 w-4" />
                   <span>{location}</span>
@@ -206,7 +206,7 @@ export default function Step3() {
                 <div className="mb-6">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-gray-700 font-medium text-sm">
-                      {currentSteps[currentStepIndex]?.text || "Connecting..."}
+                      {currentSteps[currentStepIndex]?.text || "Conectando..."}
                     </span>
                     <span className="text-green-600 font-bold text-sm">{Math.round(progress)}%</span>
                   </div>
@@ -253,13 +253,13 @@ export default function Step3() {
               // Estado Completo
               <div className="text-center py-4 border-t border-gray-200 mt-6">
                 <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-gray-800 mb-2">Synchronization Complete!</h3>
-                <p className="text-gray-600 mb-6">Your private access has been successfully established.</p>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">Sincronização Completa!</h3>
+                <p className="text-gray-600 mb-6">Seu acesso privado foi estabelecido com sucesso.</p>
                 <Button
                   onClick={handleViewReport}
                   className="w-full h-12 bg-green-500 hover:bg-green-600 text-white text-lg font-medium rounded-lg"
                 >
-                  View Full Report Now
+                  Ver Relatório Completo Agora
                 </Button>
               </div>
             )}
@@ -270,16 +270,16 @@ export default function Step3() {
         <footer className="w-full max-w-md text-center py-4">
           <div className="flex justify-center space-x-6 text-sm mb-3">
             <Link href="#" className="text-gray-500 hover:text-blue-500">
-              Privacy Policy
+              Política de Privacidade
             </Link>
             <Link href="#" className="text-gray-500 hover:text-blue-500">
-              Terms of Use
+              Termos de Uso
             </Link>
             <Link href="#" className="text-gray-500 hover:text-blue-500">
-              Email Support
+              Suporte por Email
             </Link>
           </div>
-          <p className="text-gray-400 text-xs">© 2024 Protect Your Relationship. All rights reserved.</p>
+          <p className="text-gray-400 text-xs">© 2025 Proteja Seu Relacionamento. Todos os direitos reservados.</p>
         </footer>
       </div>
 
