@@ -264,12 +264,12 @@ export default function Step4Female() {
   // =======================================================
   const handlePayment = async () => {
     if (!formData.name || !formData.email || !formData.document) {
-      setPaymentError("Por favor, preencha todos os campos")
-      return
+      setPaymentError("Por favor, preencha todos os campos.");
+      return;
     }
 
-    setIsLoading(true)
-    setPaymentError("")
+    setIsLoading(true);
+    setPaymentError("");
 
     try {
       const response = await fetch("/api/create-pay", {
@@ -279,34 +279,35 @@ export default function Step4Female() {
           selectedBumps: selectedBumps,
           customer: { name: formData.name, email: formData.email, document: formData.document },
         }),
-      })
+      });
 
-      const data = await response.json()
+      // --- ESTA É A MUDANÇA CRUCIAL NO FRONTEND ---
+      // Primeiro, lemos a resposta como JSON, pois nosso backend agora SEMPRE retorna JSON.
+      const data = await response.json();
 
-      // Adicionado logging para debugar
-      console.log("[v0] Resposta da API:", data)
-
+      // Agora, verificamos se a resposta foi bem-sucedida (status 2xx) E se não há erro no corpo.
       if (!response.ok || data.hasError) {
-        throw new Error(data.error || "Erro ao processar pagamento")
+        // Se houver um erro, usamos a mensagem de erro do JSON retornado pelo backend.
+        const errorMessage = data.details || data.error || "Ocorreu um erro desconhecido.";
+        throw new Error(errorMessage);
       }
-
-      const pixPayload = data.pix?.payload
+      
+      const pixPayload = data.pix?.payload;
 
       if (pixPayload) {
-        const params = new URLSearchParams({
-          copyPaste: pixPayload,
-        })
-        router.push(`/payment?${params.toString()}`)
+        const params = new URLSearchParams({ copyPaste: pixPayload });
+        router.push(`/payment?${params.toString()}`);
       } else {
-        throw new Error("Dados do PIX não foram recebidos da API")
+        throw new Error("Resposta bem-sucedida, mas os dados do PIX não foram encontrados.");
       }
     } catch (error: any) {
-      setPaymentError(error.message || "Erro ao conectar com o servidor")
-      console.error("[v0] Erro ao processar pagamento:", error)
+      console.error("[v0] Erro ao processar pagamento:", error);
+      // Exibe a mensagem de erro capturada (seja do backend ou de falha de rede)
+      setPaymentError(error.message);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
   // =======================================================
   //     FIM DA MUDANÇA
   // =======================================================

@@ -43,7 +43,7 @@ function PaymentScreen() {
   return (
     <div className="max-w-md mx-auto bg-white rounded-xl shadow-lg p-6 sm:p-8 m-4">
       <div className="text-center">
-        <Image src="/images/pix-icon.png" alt="PIX" width={80} height={80} className="mx-auto mb-4" />
+        <Image src="/images/design-mode/pix-icon.png" alt="PIX" width={150} height={150} className="mx-auto mb-4" />
         <h1 className="text-2xl font-bold text-gray-900">Finalize seu Pagamento</h1>
         <p className="text-gray-600 mt-2">
           Abra o aplicativo do seu banco, escolha a opção PIX e escaneie o código QR abaixo.
