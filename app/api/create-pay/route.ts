@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from "uuid"
 // (Seu objeto de preços e outra lógica permanecem iguais)
 const prices = {
   base: 47.0,
-  whats: 37.9,
+  whats: 37.0,
   insta: 17.0,
   facebook: 17.0,
   gps: 7.0,
