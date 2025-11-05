@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation"
 import Image from "next/image"
 
 const countries = [
-  { code: "+1", name: "Estados Unidos", flag: "🇺🇸", placeholder: "(555) 123-4567" },
+  { code: "+55", name: "Brasil", flag: "🇧🇷", placeholder: "(11) 99999-9999" },
   { code: "+1", name: "Canadá", flag: "🇨🇦", placeholder: "(555) 123-4567" },
   { code: "+44", name: "Reino Unido", flag: "🇬🇧", placeholder: "7911 123456" },
   { code: "+33", name: "França", flag: "🇫🇷", placeholder: "6 12 34 56 78" },
@@ -19,7 +19,7 @@ const countries = [
   { code: "+34", name: "Espanha", flag: "🇪🇸", placeholder: "612 34 56 78" },
   { code: "+351", name: "Portugal", flag: "🇵🇹", placeholder: "912 345 678" },
   { code: "+52", name: "México", flag: "🇲🇽", placeholder: "55 1234 5678" },
-  { code: "+55", name: "Brasil", flag: "🇧🇷", placeholder: "(11) 99999-9999" },
+  { code: "+1", name: "Estados Unidos", flag: "🇺🇸", placeholder: "(555) 123-4567" },
   { code: "+54", name: "Argentina", flag: "🇦🇷", placeholder: "11 1234-5678" },
   { code: "+56", name: "Chile", flag: "🇨🇱", placeholder: "9 1234 5678" },
   { code: "+57", name: "Colômbia", flag: "🇨🇴", placeholder: "300 1234567" },
