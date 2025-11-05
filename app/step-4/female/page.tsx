@@ -85,6 +85,7 @@ const ChatPopup = ({
               src={
                 profilePhoto ||
                 "https://media.istockphoto.com/id/1337144146/vector/default-avatar-profile-icon-vector.jpg?s=612x612&w=0&k=20&c=BIbFwuv7FxTWvh5S3vB6bkT0Qv8Vn8N5Ffseq84ClGI=" ||
+                "/placeholder.svg" ||
                 "/placeholder.svg"
               }
               alt="Perfil"
@@ -147,6 +148,15 @@ export default function Step4Female() {
   // =======================================================
   const [location, setLocation] = useState<{ lat: number; lng: number; city: string; country: string } | null>(null)
   const [isLoadingLocation, setIsLoadingLocation] = useState(true)
+
+  const [selectedBumps, setSelectedBumps] = useState<string[]>([])
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    document: "",
+  })
+  const [isLoading, setIsLoading] = useState(false)
+  const [paymentError, setPaymentError] = useState("")
 
   const defaultLocation = {
     lat: -23.5505,
@@ -260,6 +270,101 @@ export default function Step4Female() {
     { word: "Não conta", count: 5 },
   ]
 
+  const orderBumps = [
+    {
+      id: "whats",
+      title: "Modo Restaurador",
+      description: "Você pode restaurar todas as mensagens, fotos e vídeos apagados dos últimos 90 dias, recuperando tudo o que estava oculto",
+      price: 37.0,
+      icon: "/images/whatsapp-icon.png",
+      bgColor: "bg-green-50",
+    },
+    {
+      id: "insta",
+      title: "Insta Check",
+      description:
+        "Com apenas o @perfil do Instagram da pessoa que você deseja, espie todas as conversas em tempo real.",
+      price: 17.0,
+      icon: "/images/instagram-icon.png",
+      bgColor: "bg-pink-50",
+    },
+    {
+      id: "facebook",
+      title: "Facebook Check",
+      description: "Espionagem em tempo real no Facebook e Messenger (Fotos, mensagens, curtidas e visualizações)",
+      price: 17.0,
+      icon: "/images/facebook-icon.png",
+      bgColor: "bg-blue-50",
+    },
+    {
+      id: "gps",
+      title: "GPS Check",
+      description: "Rastreie a localização da pessoa desejada 24 horas por dia via GPS",
+      price: 7.0,
+      icon: "/images/gps-icon.png",
+      bgColor: "bg-red-50",
+    },
+  ]
+
+  const toggleBump = (bumpId: string) => {
+    setSelectedBumps((prev) => (prev.includes(bumpId) ? prev.filter((id) => id !== bumpId) : [...prev, bumpId]))
+  }
+
+  const calculateTotal = () => {
+    let total = 47.0 // Preço base
+    selectedBumps.forEach((bumpId) => {
+      const bump = orderBumps.find((b) => b.id === bumpId)
+      if (bump) total += bump.price
+    })
+    return total.toFixed(2)
+  }
+
+  const handlePayment = async () => {
+    if (!formData.name || !formData.email || !formData.document) {
+      setPaymentError("Por favor, preencha todos os campos")
+      return
+    }
+
+    setIsLoading(true)
+    setPaymentError("")
+
+    try {
+      const response = await fetch("/api/create-pay", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          selectedBumps: selectedBumps,
+          customer: {
+            name: formData.name,
+            email: formData.email,
+            document: formData.document,
+          },
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok || data.hasError) {
+        setPaymentError(data.error || "Erro ao processar pagamento")
+        return
+      }
+
+      // Redirecionar para página de pagamento PIX
+      if (data.qr_code_url) {
+        window.location.href = data.qr_code_url
+      } else if (data.authorization_url) {
+        window.location.href = data.authorization_url
+      }
+    } catch (error) {
+      setPaymentError("Erro ao conectar com o servidor")
+      console.error(error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Header */}
@@ -317,7 +422,7 @@ export default function Step4Female() {
                   <div className="w-8 h-8 bg-gray-300 rounded-full overflow-hidden">
                     <Image
                       src={convo.img || "/placeholder.svg"}
-                      alt="Perfil"
+                      alt={`Mídia recuperada ${index + 1}`}
                       width={32}
                       height={32}
                       className="object-cover h-full w-full"
@@ -451,11 +556,11 @@ export default function Step4Female() {
           </div>
         </div>
 
-        {/* Exclusive Discount */}
+        {/* Exclusive Discount with OrderBumps */}
         <div className="bg-[#0A3622] text-white rounded-lg p-6">
           <h2 className="text-2xl font-bold text-center">DESCONTO EXCLUSIVO</h2>
-          <div className="text-xl text-red-400 line-through text-center my-2">$97</div>
-          <div className="text-4xl font-bold mb-4 text-center">$17</div>
+          <div className="text-xl text-red-400 line-through text-center my-2">R$197</div>
+          <div className="text-4xl font-bold mb-4 text-center">R$47</div>
 
           <div className="space-y-2 text-sm mb-6 text-left">
             <div className="flex items-center gap-4">
@@ -475,14 +580,82 @@ export default function Step4Female() {
               <span>Foi detectado que esta pessoa arquivou 2 conversas ontem</span>
             </div>
           </div>
-          <a
-            href="https://pay.hotmart.com/R102720481T?checkoutMode=10"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block w-full rounded-full bg-[#26d366] py-3 text-lg font-bold text-white text-center shadow-[0_4px_12px_rgba(38,211,102,0.3)] transition duration-150 ease-in-out hover:bg-[#22b858] hover:shadow-lg"
+
+          <h3 className="text-lg font-bold mb-4 text-center">Turbine Sua Investigação (Opcional)</h3>
+          <div className="space-y-3 mb-6">
+            {orderBumps.map((bump) => (
+              <div
+                key={bump.id}
+                className={`${bump.bgColor} rounded-lg p-4 cursor-pointer transition-all border-2 ${
+                  selectedBumps.includes(bump.id) ? "border-green-500 bg-green-100" : "border-gray-300"
+                }`}
+                onClick={() => toggleBump(bump.id)}
+              >
+                <div className="flex items-start gap-4">
+                  <input
+                    type="checkbox"
+                    checked={selectedBumps.includes(bump.id)}
+                    onChange={() => toggleBump(bump.id)}
+                    className="mt-1 w-5 h-5 cursor-pointer"
+                  />
+                  <div className="flex-1">
+                    <h4 className="font-bold text-gray-800">{bump.title}</h4>
+                    <p className="text-sm text-gray-600">{bump.description}</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-bold text-green-600">+ R${bump.price.toFixed(2)}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <h3 className="text-lg font-bold mb-4 text-center">Dados para Pagamento</h3>
+          <div className="space-y-3 mb-4">
+            <input
+              type="text"
+              placeholder="Nome Completo"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="w-full px-4 py-2 rounded-lg text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-400"
+            />
+            <input
+              type="email"
+              placeholder="E-mail"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              className="w-full px-4 py-2 rounded-lg text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-400"
+            />
+            <input
+              type="text"
+              placeholder="CPF (000.000.000-00)"
+              value={formData.document}
+              onChange={(e) => setFormData({ ...formData, document: e.target.value })}
+              className="w-full px-4 py-2 rounded-lg text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-400"
+            />
+          </div>
+
+          <div className="bg-white/10 rounded-lg p-4 mb-4">
+            <div className="flex justify-between items-center text-white">
+              <span className="text-lg font-semibold">Total:</span>
+              <span className="text-2xl font-bold">R${calculateTotal()}</span>
+            </div>
+            <p className="text-xs text-gray-300 mt-2">Por favor, preencha todos os dados para continuar.</p>
+          </div>
+
+          {paymentError && (
+            <div className="bg-red-500/20 border border-red-500 rounded-lg p-3 mb-4 text-sm text-red-200">
+              {paymentError}
+            </div>
+          )}
+
+          <button
+            onClick={handlePayment}
+            disabled={isLoading}
+            className="w-full rounded-full bg-[#26d366] py-3 text-lg font-bold text-white shadow-[0_4px_12px_rgba(38,211,102,0.3)] transition duration-150 ease-in-out hover:bg-[#22b858] hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            COMPRAR AGORA →
-          </a>
+            {isLoading ? "Processando..." : "PAGAR COM PIX E DESBLOQUEAR TUDO"}
+          </button>
         </div>
 
         {/* 30 Days Guarantee */}
