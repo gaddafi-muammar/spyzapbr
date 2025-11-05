@@ -1,45 +1,50 @@
-// src/app/api/webhook/route.ts
+// /app/api/webhook/route.ts
 
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
-// ATENÇÃO: ISTO É UMA SIMULAÇÃO EM MEMÓRIA. NÃO USE EM PRODUÇÃO REAL!
-// Em produção, use um banco de dados (Redis, Vercel KV, PostgreSQL, etc.)
-let paymentStatuses: Record<string, string> = {};
+// IMPORTANTE: Em produção, você deve validar esta requisição para garantir
+// que ela realmente veio da LiraPay, usando um segredo compartilhado ou assinatura.
+// Por agora, vamos focar na lógica principal.
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    // Lembre-se de validar a assinatura do webhook aqui por segurança!
-    // A documentação da LiraPay deve explicar como fazer isso.
+    console.log("[v0] Webhook recebido:", JSON.stringify(body, null, 2));
 
-    const transactionId = body.id; // ou body.external_id, dependendo do que você preferir usar
-    const status = body.status;
+    // A LiraPay geralmente envia o status e o ID da transação
+    const transactionId = body.external_id;
+    const paymentStatus = body.status; // ex: 'PAID', 'EXPIRED', etc.
 
-    if (transactionId && status) {
-      console.log(`Webhook recebido: Transação ${transactionId} está com status ${status}`);
-      
-      // Se o pagamento foi autorizado, atualize o status
-      if (status === "AUTHORIZED") {
-        // Salve o status no seu banco de dados
-        paymentStatuses[transactionId] = "PAID";
-
-        // AQUI VOCÊ DEVE:
-        // 1. Liberar o acesso do cliente ao produto.
-        // 2. Enviar o e-mail de confirmação com o link do relatório.
-      }
+    if (!transactionId || !paymentStatus) {
+      return NextResponse.json({ error: "Dados do webhook incompletos" }, { status: 400 });
     }
 
-    // Responda para a LiraPay que você recebeu o webhook com sucesso
-    return NextResponse.json({ received: true }, { status: 200 });
+    // ===================================================================
+    // AQUI É ONDE A SUA LÓGICA DE NEGÓCIO ACONTECE
+    // ===================================================================
+    if (paymentStatus === "PAID") {
+      // 1. Encontre a encomenda no seu banco de dados usando o 'transactionId'
+      // Ex: const order = await database.orders.find({ where: { id: transactionId } });
 
-  } catch (error) {
-    console.error("Erro no webhook:", error);
-    return NextResponse.json({ error: "Erro interno no servidor" }, { status: 500 });
+      // 2. Atualize o status da encomenda para "PAGO"
+      // Ex: await database.orders.update({ where: { id: transactionId }, data: { status: 'PAID' } });
+      console.log(`[v0] Transação ${transactionId} foi paga! Atualizando banco de dados...`);
+
+      // 3. Envie o e-mail de confirmação para o cliente
+      // Ex: await sendConfirmationEmail(order.customer.email);
+      console.log(`[v0] Enviando e-mail de confirmação...`);
+
+      // 4. Libere o acesso ao produto digital
+      // ...sua lógica aqui...
+    }
+    // ===================================================================
+
+    // Responda à LiraPay com sucesso (status 200) para que ela saiba que você recebeu.
+    return NextResponse.json({ received: true });
+
+  } catch (error: any) {
+    console.error("Erro no processamento do webhook:", error);
+    return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 });
   }
-}
-
-// Esta função será usada pela nossa rota de verificação de status
-export function getPaymentStatus(transactionId: string): string {
-    return paymentStatuses[transactionId] || "PENDING";
 }

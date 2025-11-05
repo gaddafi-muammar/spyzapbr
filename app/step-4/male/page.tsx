@@ -216,7 +216,7 @@ export default function Step4Male() {
   }
 
   // =======================================================
-  //     FUNÇÃO DE PAGAMENTO CORRIGIDA
+  //     FUNÇÃO DE PAGAMENTO COM A MUDANÇA
   // =======================================================
   const handlePayment = async () => {
     if (!formData.name || !formData.email || !formData.document) {
@@ -245,16 +245,22 @@ export default function Step4Male() {
       }
       
       const pixPayload = data.pix?.payload;
+      const transactionId = data.transactionId; // <-- CAPTURA O ID
 
-      if (pixPayload) {
-        const params = new URLSearchParams({ copyPaste: pixPayload });
+      if (pixPayload && transactionId) {
+        // --- MUDANÇA APLICADA AQUI ---
+        // Adiciona o transactionId aos parâmetros da URL
+        const params = new URLSearchParams({ 
+          copyPaste: pixPayload,
+          transactionId: transactionId,
+        });
         router.push(`/payment?${params.toString()}`);
       } else {
-        throw new Error("Resposta bem-sucedida, mas os dados do PIX não foram encontrados.");
+        throw new Error("Dados essenciais para o pagamento não foram recebidos.");
       }
-    } catch (error: any) { // <-- CORREÇÃO AQUI: o parâmetro é 'error'
-      console.error("[v0] Erro ao processar pagamento:", error); // Usando 'error'
-      setPaymentError(error.message); // Usando 'error.message'
+    } catch (error: any) {
+      console.error("[v0] Erro ao processar pagamento:", error);
+      setPaymentError(error.message);
     } finally {
       setIsLoading(false);
     }

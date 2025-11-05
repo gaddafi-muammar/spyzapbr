@@ -2,7 +2,7 @@
 
 "use client"
 
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation" // Importe useRouter
 import { Suspense, useEffect, useState } from "react"
 import { QRCodeCanvas } from "qrcode.react"
 import { Check, Copy } from "lucide-react"
@@ -10,15 +10,51 @@ import Image from "next/image"
 
 // Componente principal que faz a lógica
 function PaymentScreen() {
+  const router = useRouter() // Inicialize o router
   const searchParams = useSearchParams()
   const [pixPayload, setPixPayload] = useState<string | null>(null)
+  const [transactionId, setTransactionId] = useState<string | null>(null) // Novo estado para o ID
   const [isCopied, setIsCopied] = useState(false)
 
   useEffect(() => {
-    // Pega o parâmetro 'copyPaste' da URL
+    // Pega ambos os parâmetros da URL
     const payload = searchParams.get("copyPaste")
+    const id = searchParams.get("transactionId")
     setPixPayload(payload)
+    setTransactionId(id)
   }, [searchParams])
+
+
+  // --- LÓGICA DE POLLING ACRESCENTADA ---
+  useEffect(() => {
+    // Só comece a verificar se tivermos um ID de transação
+    if (!transactionId) return;
+
+    // Define um intervalo para verificar o status a cada 5 segundos
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/payment-status?transactionId=${transactionId}`);
+        const data = await response.json();
+
+        console.log(`[v0] Verificando status... Status atual: ${data.status}`);
+
+        // SE O PAGAMENTO FOI CONFIRMADO
+        if (data.status === "PAID") {
+          clearInterval(interval); // Pare de verificar
+          router.push("/obrigado"); // Redirecione para a página de obrigado!
+        }
+      } catch (error) {
+        console.error("Erro durante o polling de status:", error);
+        // Opcional: parar o polling se houver muitos erros para não sobrecarregar o servidor
+      }
+    }, 5000); // 5000ms = 5 segundos
+
+    // Limpa o intervalo quando o componente for desmontado (MUITO IMPORTANTE!)
+    // Isso evita que a verificação continue rodando mesmo que o usuário saia da página.
+    return () => clearInterval(interval);
+
+  }, [transactionId, router]); // Dependências do useEffect
+
 
   const handleCopy = () => {
     if (pixPayload) {
@@ -30,7 +66,7 @@ function PaymentScreen() {
   }
 
   // Se o payload ainda não foi carregado ou não existe
-  if (!pixPayload) {
+  if (!pixPayload || !transactionId) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen text-center p-4">
         <h1 className="text-xl font-bold text-gray-800">Carregando dados de pagamento...</h1>
@@ -78,7 +114,7 @@ function PaymentScreen() {
       <div className="mt-8 p-4 bg-yellow-50 border border-yellow-300 rounded-lg text-center">
         <p className="font-semibold text-yellow-800">Aguardando Pagamento</p>
         <p className="text-sm text-yellow-700 mt-1">
-          Após o pagamento ser confirmado, você receberá o acesso no seu e-mail.
+          Após o pagamento ser confirmado, esta página será redirecionada automaticamente. Você também receberá o acesso no seu e-mail.
         </p>
       </div>
     </div>
