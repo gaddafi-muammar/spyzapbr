@@ -6,6 +6,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { Loader2, CheckCircle, MapPin } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { saveUTMParams, buildUrlWithUTM, pushUTMToDataLayer } from "@/lib/utm-params"
 
 interface ProgressStep {
   id: string
@@ -56,6 +57,11 @@ export default function Step3() {
     }
 
     fetchLocation()
+  }, [])
+
+  useEffect(() => {
+    saveUTMParams()
+    pushUTMToDataLayer()
   }, [])
 
   const steps: ProgressStep[] = useMemo(
@@ -133,11 +139,9 @@ export default function Step3() {
 
   const handleViewReport = () => {
     const selectedGender = localStorage.getItem("selectedGender") || "male"
-    if (selectedGender === "female") {
-      router.push("/step-4/female")
-    } else {
-      router.push("/step-4/male")
-    }
+    const nextPath = selectedGender === "female" ? "/step-4/female" : "/step-4/male"
+    const nextUrl = buildUrlWithUTM(nextPath)
+    router.push(nextUrl)
   }
 
   return (

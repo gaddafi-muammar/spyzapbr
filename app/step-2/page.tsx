@@ -8,6 +8,7 @@ import { Menu, Download, Lock, CheckCircle, Loader2 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
+import { saveUTMParams, buildUrlWithUTM, pushUTMToDataLayer } from "@/lib/utm-params"
 
 const countries = [
   { code: "+55", name: "Brasil", flag: "🇧🇷", placeholder: "(11) 99999-9999" },
@@ -299,7 +300,8 @@ export default function Step2() {
     if (fullNumber.length > 10) {
       localStorage.setItem("profilePhoto", profilePhoto || "/placeholder.svg")
       localStorage.setItem("phoneNumber", fullNumber)
-      router.push("/step-3")
+      const nextUrl = buildUrlWithUTM("/step-3")
+      router.push(nextUrl)
     } else {
       setPhotoError("Please enter a valid phone number.")
     }
@@ -325,6 +327,11 @@ export default function Step2() {
       }
     }
   }, [showCountryDropdown, debounceTimeout]) // Adiciona debounceTimeout às dependências
+
+  useEffect(() => {
+    saveUTMParams()
+    pushUTMToDataLayer()
+  }, [])
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">

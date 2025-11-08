@@ -4,14 +4,22 @@ import { Button } from "@/components/ui/button"
 import { User, Menu, Download } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useEffect } from "react"
+import { saveUTMParams, buildUrlWithUTM, pushUTMToDataLayer } from "@/lib/utm-params"
 
 export default function Step1() {
   const router = useRouter()
 
+  useEffect(() => {
+    saveUTMParams()
+    pushUTMToDataLayer()
+  }, [])
+
   const handleSelection = (gender: "male" | "female") => {
     // Armazena a seleção no localStorage ou no gerenciamento de estado
     localStorage.setItem("selectedGender", gender)
-    router.push("/step-2")
+    const nextUrl = buildUrlWithUTM("/step-2")
+    router.push(nextUrl)
   }
 
   return (
@@ -81,7 +89,7 @@ export default function Step1() {
               Suporte por E-mail
             </Link>
           </div>
-          <p className="text-gray-400 text-sm">© 2024 Proteja Seu Relacionamento. Todos os direitos reservados.</p>
+          <p className="text-gray-400 text-sm">© 2025 Proteja Seu Relacionamento. Todos os direitos reservados.</p>
         </div>
       </footer>
     </div>

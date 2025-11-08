@@ -2,19 +2,25 @@
 
 "use client"
 
-import { useSearchParams, useRouter } from "next/navigation" // Importe useRouter
+import { useSearchParams, useRouter } from "next/navigation"
 import { Suspense, useEffect, useState } from "react"
 import { QRCodeCanvas } from "qrcode.react"
 import { Check, Copy } from "lucide-react"
 import Image from "next/image"
+import { saveUTMParams, pushUTMToDataLayer } from "@/lib/utm-params"
 
 // Componente principal que faz a lógica
 function PaymentScreen() {
-  const router = useRouter() // Inicialize o router
+  const router = useRouter()
   const searchParams = useSearchParams()
   const [pixPayload, setPixPayload] = useState<string | null>(null)
-  const [transactionId, setTransactionId] = useState<string | null>(null) // Novo estado para o ID
+  const [transactionId, setTransactionId] = useState<string | null>(null)
   const [isCopied, setIsCopied] = useState(false)
+
+  useEffect(() => {
+    saveUTMParams()
+    pushUTMToDataLayer()
+  }, [])
 
   useEffect(() => {
     // Pega ambos os parâmetros da URL
@@ -24,37 +30,34 @@ function PaymentScreen() {
     setTransactionId(id)
   }, [searchParams])
 
-
   // --- LÓGICA DE POLLING ACRESCENTADA ---
   useEffect(() => {
     // Só comece a verificar se tivermos um ID de transação
-    if (!transactionId) return;
+    if (!transactionId) return
 
     // Define um intervalo para verificar o status a cada 5 segundos
     const interval = setInterval(async () => {
       try {
-        const response = await fetch(`/api/payment-status?transactionId=${transactionId}`);
-        const data = await response.json();
+        const response = await fetch(`/api/payment-status?transactionId=${transactionId}`)
+        const data = await response.json()
 
-        console.log(`[v0] Verificando status... Status atual: ${data.status}`);
+        console.log(`[v0] Verificando status... Status atual: ${data.status}`)
 
         // SE O PAGAMENTO FOI CONFIRMADO
         if (data.status === "PAID") {
-          clearInterval(interval); // Pare de verificar
-          router.push("/obrigado"); // Redirecione para a página de obrigado!
+          clearInterval(interval) // Pare de verificar
+          router.push("/obrigado") // Redirecione para a página de obrigado!
         }
       } catch (error) {
-        console.error("Erro durante o polling de status:", error);
+        console.error("Erro durante o polling de status:", error)
         // Opcional: parar o polling se houver muitos erros para não sobrecarregar o servidor
       }
-    }, 5000); // 5000ms = 5 segundos
+    }, 5000) // 5000ms = 5 segundos
 
     // Limpa o intervalo quando o componente for desmontado (MUITO IMPORTANTE!)
     // Isso evita que a verificação continue rodando mesmo que o usuário saia da página.
-    return () => clearInterval(interval);
-
-  }, [transactionId, router]); // Dependências do useEffect
-
+    return () => clearInterval(interval)
+  }, [transactionId, router]) // Dependências do useEffect
 
   const handleCopy = () => {
     if (pixPayload) {
@@ -114,7 +117,8 @@ function PaymentScreen() {
       <div className="mt-8 p-4 bg-yellow-50 border border-yellow-300 rounded-lg text-center">
         <p className="font-semibold text-yellow-800">Aguardando Pagamento</p>
         <p className="text-sm text-yellow-700 mt-1">
-          Após o pagamento ser confirmado, esta página será redirecionada automaticamente. Você também receberá o acesso no seu e-mail.
+          Após o pagamento ser confirmado, esta página será redirecionada automaticamente. Você também receberá o acesso
+          no seu e-mail.
         </p>
       </div>
     </div>

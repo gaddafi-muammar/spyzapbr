@@ -1,9 +1,10 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation" 
+import { useRouter } from "next/navigation"
 import { X, Lock, CheckCheck, MapPin, AlertTriangle } from "lucide-react"
 import Image from "next/image"
+import { saveUTMParams, pushUTMToDataLayer } from "@/lib/utm-params"
 
 // =======================================================
 //     Componente RealtimeMap (Sem alterações)
@@ -82,7 +83,8 @@ const ChatPopup = ({
             <Image
               src={
                 profilePhoto ||
-                "https://media.istockphoto.com/id/1337144146/vector/default-avatar-profile-icon-vector.jpg?s=612x612&w=0&k=20&c=BIbFwuv7FxTWvh5S3vB6bkT0Qv8Vn8N5Ffseq84ClGI="
+                "https://media.istockphoto.com/id/1337144146/vector/default-avatar-profile-icon-vector.jpg?s=612x612&w=0&k=20&c=BIbFwuv7FxTWvh5S3vB6bkT0Qv8Vn8N5Ffseq84ClGI=" ||
+                "/placeholder.svg"
               }
               alt="Perfil"
               width={40}
@@ -145,6 +147,11 @@ export default function Step4Female() {
   const [paymentError, setPaymentError] = useState("")
 
   const defaultLocation = { lat: -23.5505, lng: -46.6333, city: "São Paulo", country: "Brasil" }
+
+  useEffect(() => {
+    saveUTMParams()
+    pushUTMToDataLayer()
+  }, [])
 
   useEffect(() => {
     const storedPhoto = localStorage.getItem("profilePhoto")
@@ -262,12 +269,12 @@ export default function Step4Female() {
   // =======================================================
   const handlePayment = async () => {
     if (!formData.name || !formData.email || !formData.document) {
-      setPaymentError("Por favor, preencha todos os campos.");
-      return;
+      setPaymentError("Por favor, preencha todos os campos.")
+      return
     }
 
-    setIsLoading(true);
-    setPaymentError("");
+    setIsLoading(true)
+    setPaymentError("")
 
     try {
       const response = await fetch("/api/create-pay", {
@@ -277,36 +284,36 @@ export default function Step4Female() {
           selectedBumps: selectedBumps,
           customer: { name: formData.name, email: formData.email, document: formData.document },
         }),
-      });
+      })
 
-      const data = await response.json();
+      const data = await response.json()
 
       if (!response.ok || data.hasError) {
-        const errorMessage = data.details || data.error || "Ocorreu um erro desconhecido.";
-        throw new Error(errorMessage);
+        const errorMessage = data.details || data.error || "Ocorreu um erro desconhecido."
+        throw new Error(errorMessage)
       }
-      
-      const pixPayload = data.pix?.payload;
-      const transactionId = data.transactionId; // <-- CAPTURA O ID
+
+      const pixPayload = data.pix?.payload
+      const transactionId = data.transactionId // <-- CAPTURA O ID
 
       if (pixPayload && transactionId) {
         // --- MUDANÇA APLICADA AQUI ---
         // Adiciona o transactionId aos parâmetros da URL
-        const params = new URLSearchParams({ 
+        const params = new URLSearchParams({
           copyPaste: pixPayload,
           transactionId: transactionId,
-        });
-        router.push(`/payment?${params.toString()}`);
+        })
+        router.push(`/payment?${params.toString()}`)
       } else {
-        throw new Error("Dados essenciais para o pagamento não foram recebidos.");
+        throw new Error("Dados essenciais para o pagamento não foram recebidos.")
       }
     } catch (error: any) {
-      console.error("[v0] Erro ao processar pagamento:", error);
-      setPaymentError(error.message);
+      console.error("[v0] Erro ao processar pagamento:", error)
+      setPaymentError(error.message)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -322,7 +329,7 @@ export default function Step4Female() {
             <div className="w-20 h-20 bg-gray-300 rounded-full flex items-center justify-center overflow-hidden">
               {profilePhoto && (
                 <Image
-                  src={profilePhoto}
+                  src={profilePhoto || "/placeholder.svg"}
                   alt="Perfil WhatsApp"
                   width={80}
                   height={80}
@@ -351,7 +358,7 @@ export default function Step4Female() {
               >
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full overflow-hidden">
-                    <Image src={convo.img} alt={convo.name} width={32} height={32} />
+                    <Image src={convo.img || "/placeholder.svg"} alt={convo.name} width={32} height={32} />
                   </div>
                   <div>
                     <p className="font-medium text-sm">{convo.name}</p>
@@ -369,7 +376,12 @@ export default function Step4Female() {
           <div className="grid grid-cols-3 gap-3">
             {femaleImages.map((image, index) => (
               <div key={index} className="aspect-square relative rounded-lg overflow-hidden">
-                <Image src={image} alt={`Mídia recuperada ${index + 1}`} fill className="object-cover"/>
+                <Image
+                  src={image || "/placeholder.svg"}
+                  alt={`Mídia recuperada ${index + 1}`}
+                  fill
+                  className="object-cover"
+                />
               </div>
             ))}
           </div>
@@ -379,7 +391,10 @@ export default function Step4Female() {
           <h2 className="text-lg font-semibold text-gray-800">Palavras-chave Suspeitas</h2>
           <div className="space-y-1">
             {suspiciousKeywords.map((item, index) => (
-              <div key={index} className="flex items-center justify-between py-3 border-b last:border-b-0 border-gray-200">
+              <div
+                key={index}
+                className="flex items-center justify-between py-3 border-b last:border-b-0 border-gray-200"
+              >
                 <span className="text-lg text-gray-800">"{item.word}"</span>
                 <div className="flex items-center justify-center w-7 h-7 bg-green-500 rounded-full text-white text-sm font-bold">
                   {item.count}
@@ -414,7 +429,7 @@ export default function Step4Female() {
             {orderBumps.map((bump) => (
               <label key={bump.id} className="grid grid-cols-[auto,1fr] items-start gap-4 py-3 cursor-pointer">
                 <div className="relative z-10 flex h-10 w-10 items-center justify-center rounded-full bg-[#0A3622]">
-                  <Image src={bump.icon} alt={bump.title} width={32} height={32} />
+                  <Image src={bump.icon || "/placeholder.svg"} alt={bump.title} width={32} height={32} />
                 </div>
                 <div className="pt-1">
                   <div className="flex items-center justify-between">
