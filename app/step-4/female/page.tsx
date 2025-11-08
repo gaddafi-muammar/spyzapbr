@@ -4,7 +4,11 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { X, Lock, CheckCheck, MapPin, AlertTriangle } from "lucide-react"
 import Image from "next/image"
-import { saveUTMParams, pushUTMToDataLayer } from "@/lib/utm-params"
+// =======================================================
+//     IMPORTAÇÃO ADICIONADA/CORRIGIDA
+// =======================================================
+// Importamos a função que Pega os UTMs, além das que salvam.
+import { saveUTMParams, pushUTMToDataLayer, getUTMParams } from "@/lib/utm-params"
 
 // =======================================================
 //     Componente RealtimeMap (Sem alterações)
@@ -148,6 +152,8 @@ export default function Step4Female() {
 
   const defaultLocation = { lat: -23.5505, lng: -46.6333, city: "São Paulo", country: "Brasil" }
 
+  // Este useEffect salva os UTMs caso o usuário aterrisse diretamente nesta página.
+  // O ideal é que ele já tenha sido salvo na Step1.
   useEffect(() => {
     saveUTMParams()
     pushUTMToDataLayer()
@@ -265,7 +271,7 @@ export default function Step4Female() {
   }
 
   // =======================================================
-  //     FUNÇÃO DE PAGAMENTO COM A MUDANÇA
+  //     FUNÇÃO DE PAGAMENTO CORRIGIDA
   // =======================================================
   const handlePayment = async () => {
     if (!formData.name || !formData.email || !formData.document) {
@@ -276,13 +282,25 @@ export default function Step4Female() {
     setIsLoading(true)
     setPaymentError("")
 
+    // --- MUDANÇA APLICADA AQUI ---
+    // 1. Recuperamos os parâmetros UTM que foram salvos no localStorage
+    const utmParams = getUTMParams()
+
+    // 2. Combinamos os dados do formulário com os parâmetros UTM
+    const finalCustomerPayload = {
+      ...formData, // Contém name, email, document
+      ...utmParams, // Contém utm_source, utm_medium, etc.
+    }
+    // --------------------------------
+
     try {
       const response = await fetch("/api/create-pay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           selectedBumps: selectedBumps,
-          customer: { name: formData.name, email: formData.email, document: formData.document },
+          // 3. Enviamos o objeto combinado para a API
+          customer: finalCustomerPayload,
         }),
       })
 
@@ -294,11 +312,9 @@ export default function Step4Female() {
       }
 
       const pixPayload = data.pix?.payload
-      const transactionId = data.transactionId // <-- CAPTURA O ID
+      const transactionId = data.transactionId
 
       if (pixPayload && transactionId) {
-        // --- MUDANÇA APLICADA AQUI ---
-        // Adiciona o transactionId aos parâmetros da URL
         const params = new URLSearchParams({
           copyPaste: pixPayload,
           transactionId: transactionId,

@@ -5,19 +5,25 @@ import { User, Menu, Download } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
+// Importe as funções do arquivo que vamos criar/corrigir
 import { saveUTMParams, buildUrlWithUTM, pushUTMToDataLayer } from "@/lib/utm-params"
 
 export default function Step1() {
   const router = useRouter()
 
+  // Este useEffect é crucial e está correto.
+  // Ele roda uma vez quando o usuário chega na página e salva os parâmetros da URL.
   useEffect(() => {
     saveUTMParams()
-    pushUTMToDataLayer()
+    // O push para o DataLayer é bom para analytics, pode manter.
+    pushUTMToDataLayer() 
   }, [])
 
   const handleSelection = (gender: "male" | "female") => {
-    // Armazena a seleção no localStorage ou no gerenciamento de estado
+    // Armazena a seleção no localStorage para usar em outras etapas, se necessário
     localStorage.setItem("selectedGender", gender)
+    
+    // Constrói a URL para a próxima etapa, garantindo que os parâmetros UTM sejam repassados
     const nextUrl = buildUrlWithUTM("/step-2")
     router.push(nextUrl)
   }

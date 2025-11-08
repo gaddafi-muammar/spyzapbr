@@ -1,57 +1,85 @@
-export function getUTMParams(): Record<string, string> {
-  if (typeof window === "undefined") return {}
+// /lib/utm-params.ts
 
-  const searchParams = new URLSearchParams(window.location.search)
-  const utmParams: Record<string, string> = {}
+// Lista dos parâmetros UTM que queremos rastrear
+const UTM_PARAMS = [
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "utm_content",
+  "utm_term",
+];
 
-  const utmKeys = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"]
+/**
+ * Pega os parâmetros UTM da URL atual e os salva no localStorage.
+ * Deve ser chamada na primeira página que o usuário visita (landing page).
+ */
+export const saveUTMParams = (): void => {
+  // Garante que o código só rode no navegador
+  if (typeof window === "undefined") return;
 
-  utmKeys.forEach((key) => {
-    const value = searchParams.get(key)
-    if (value) {
-      utmParams[key] = value
+  const params = new URLSearchParams(window.location.search);
+  const utm_data: { [key: string]: string } = {};
+  
+  UTM_PARAMS.forEach((param) => {
+    if (params.has(param)) {
+      utm_data[param] = params.get(param)!;
     }
-  })
+  });
 
-  return utmParams
-}
-
-export function saveUTMParams(): void {
-  const utmParams = getUTMParams()
-  if (Object.keys(utmParams).length > 0) {
-    localStorage.setItem("utmParams", JSON.stringify(utmParams))
+  // Salva apenas se algum parâmetro UTM foi encontrado
+  if (Object.keys(utm_data).length > 0) {
+    localStorage.setItem("utm_params", JSON.stringify(utm_data));
   }
-}
+};
 
-export function getStoredUTMParams(): Record<string, string> {
-  if (typeof window === "undefined") return {}
+/**
+ * Recupera os parâmetros UTM salvos do localStorage.
+ * Útil na página de checkout para enviar os dados para a API.
+ */
+export const getUTMParams = (): { [key: string]: string } => {
+  if (typeof window === "undefined") return {};
 
-  const stored = localStorage.getItem("utmParams")
-  return stored ? JSON.parse(stored) : {}
-}
-
-export function buildUrlWithUTM(path: string): string {
-  const utmParams = getStoredUTMParams()
-  const params = new URLSearchParams(utmParams)
-  const queryString = params.toString()
-  return queryString ? `${path}?${queryString}` : path
-}
-
-export function pushUTMToDataLayer(): void {
-  if (typeof window === "undefined") return
-
-  const utmParams = getStoredUTMParams()
-
-  if (Object.keys(utmParams).length > 0) {
-    if ((window as any).dataLayer) {
-      ;(window as any).dataLayer.push({
-        event: "page_view",
-        utm_source: utmParams.utm_source || undefined,
-        utm_medium: utmParams.utm_medium || undefined,
-        utm_campaign: utmParams.utm_campaign || undefined,
-        utm_term: utmParams.utm_term || undefined,
-        utm_content: utmParams.utm_content || undefined,
-      })
+  const saved_params = localStorage.getItem("utm_params");
+  if (saved_params) {
+    try {
+      return JSON.parse(saved_params);
+    } catch (e) {
+      console.error("Erro ao parsear UTM params do localStorage", e);
+      return {};
     }
   }
+  return {};
+};
+
+/**
+ * Constrói uma nova URL com os parâmetros UTM salvos.
+ * Essencial para manter os parâmetros ao navegar entre as páginas do funil.
+ * @param baseUrl A URL base para a qual navegar (ex: "/step-2")
+ */
+export const buildUrlWithUTM = (baseUrl: string): string => {
+  const utm_params = getUTMParams();
+  if (Object.keys(utm_params).length === 0) {
+    return baseUrl;
+  }
+
+  const new_params = new URLSearchParams(utm_params).toString();
+  return `${baseUrl}?${new_params}`;
+};
+
+
+/**
+ * Envia os dados UTM para o Google Tag Manager / Data Layer (opcional).
+ */
+export const pushUTMToDataLayer = (): void => {
+    if (typeof window === 'undefined') return;
+
+    const utm_params = getUTMParams();
+    if (Object.keys(utm_params).length > 0) {
+        // Assegura que window.dataLayer seja um array
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({
+            event: 'utm_captured',
+            ...utm_params
+        });
+    }
 }

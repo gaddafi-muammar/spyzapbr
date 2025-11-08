@@ -6,6 +6,12 @@ import { X, Lock, CheckCheck, MapPin, AlertTriangle } from "lucide-react"
 import Image from "next/image"
 
 // =======================================================
+//     IMPORTAÇÃO ADICIONADA/CORRIGIDA
+// =======================================================
+// Importamos TODAS as funções necessárias do nosso arquivo de utilidades UTM.
+import { saveUTMParams, pushUTMToDataLayer, getUTMParams } from "@/lib/utm-params"
+
+// =======================================================
 //     Componente RealtimeMap (Sem alterações)
 // =======================================================
 const RealtimeMap = ({ lat, lng, city, country }: { lat: number; lng: number; city: string; country: string }) => {
@@ -146,6 +152,13 @@ export default function Step4Male() {
 
   const defaultLocation = { lat: -23.5505, lng: -46.6333, city: "São Paulo", country: "Brasil" }
 
+  // --- MUDANÇA APLICADA AQUI ---
+  // Adicionado para garantir a captura de UTMs nesta página também
+  useEffect(() => {
+    saveUTMParams()
+    pushUTMToDataLayer()
+  }, [])
+
   useEffect(() => {
     const storedPhoto = localStorage.getItem("profilePhoto")
     setProfilePhoto(
@@ -216,7 +229,7 @@ export default function Step4Male() {
   }
 
   // =======================================================
-  //     FUNÇÃO DE PAGAMENTO COM A MUDANÇA
+  //     FUNÇÃO DE PAGAMENTO CORRIGIDA
   // =======================================================
   const handlePayment = async () => {
     if (!formData.name || !formData.email || !formData.document) {
@@ -227,13 +240,25 @@ export default function Step4Male() {
     setIsLoading(true);
     setPaymentError("");
 
+    // --- MUDANÇA APLICADA AQUI ---
+    // 1. Recuperamos os parâmetros UTM que foram salvos no localStorage
+    const utmParams = getUTMParams();
+
+    // 2. Combinamos os dados do formulário com os parâmetros UTM
+    const finalCustomerPayload = {
+      ...formData, // Contém name, email, document
+      ...utmParams,  // Contém utm_source, utm_medium, etc.
+    };
+    // --------------------------------
+
     try {
       const response = await fetch("/api/create-pay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           selectedBumps: selectedBumps,
-          customer: { name: formData.name, email: formData.email, document: formData.document },
+          // 3. Enviamos o objeto combinado para a API
+          customer: finalCustomerPayload,
         }),
       });
 
@@ -245,11 +270,9 @@ export default function Step4Male() {
       }
       
       const pixPayload = data.pix?.payload;
-      const transactionId = data.transactionId; // <-- CAPTURA O ID
+      const transactionId = data.transactionId; 
 
       if (pixPayload && transactionId) {
-        // --- MUDANÇA APLICADA AQUI ---
-        // Adiciona o transactionId aos parâmetros da URL
         const params = new URLSearchParams({ 
           copyPaste: pixPayload,
           transactionId: transactionId,
