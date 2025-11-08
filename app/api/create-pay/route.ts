@@ -46,12 +46,20 @@ export async function POST(request: Request) {
       }
     }
 
-    // Ajustando o objeto do cliente para corresponder exatamente ao que a API LiraPay exige.
+    // --- MUDANÇA APLICADA AQUI ---
+    // Ajustando o objeto do cliente para incluir os campos UTM, conforme a documentação da LiraPay.
     const customerData: any = {
       name: customer.name,
       email: customer.email,
       document_type: "CPF",
       document: sanitizedDocument,
+      // Adiciona os parâmetros UTM ao objeto do cliente, se eles existirem.
+      // O seu frontend precisa enviar esses dados dentro do objeto 'customer'.
+      utm_source: customer.utm_source,
+      utm_medium: customer.utm_medium,
+      utm_campaign: customer.utm_campaign,
+      utm_content: customer.utm_content,
+      utm_term: customer.utm_term,
     };
     
     const liraPayPayload = {
@@ -85,8 +93,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // --- MUDANÇA APLICADA AQUI ---
-    // Retorna não apenas os dados da LiraPay, mas também o ID que criamos.
     return NextResponse.json({ ...data, transactionId: liraPayPayload.external_id });
 
   } catch (error: any) {
